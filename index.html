@@ -98,7 +98,7 @@ textarea.inp{padding:10px 12px;min-height:90px;resize:vertical}
 .main{max-width:560px;margin:0 auto;padding:18px 16px calc(var(--navh) + var(--minih) + 96px)}
 .view{display:flex;flex-direction:column;gap:24px}
 .sec{display:flex;flex-direction:column;gap:10px}
-.addbar{position:sticky;top:var(--hh);z-index:10;background:var(--bg);margin:-18px -16px 0;padding:14px 16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.addbar{background:var(--s1);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px}.addbar .inp{background:var(--bg)}.addbar .seg button{min-height:38px}.welcome{display:flex;flex-direction:column;gap:14px;padding:28px 4px}.welcome h2{margin:0;font-size:18px;font-weight:700}.welcome p{margin:0;color:var(--ink2);line-height:1.6}.welcome ol{margin:0;padding-left:20px;color:var(--ink2);line-height:1.9}.syn{background:none;border:0;padding:0 8px;min-height:36px;display:inline-flex;align-items:center}
 .ar{display:flex;gap:8px}
 .ar .grow{flex:1}
 .card{background:var(--s1);border:1px solid var(--line);border-radius:8px;overflow:hidden;transition:opacity .18s,transform .18s}
@@ -212,7 +212,7 @@ a{color:var(--blue)}
 .pstep{display:flex;align-items:center;gap:12px;border-top:1px solid var(--line);padding:10px 16px;min-height:56px}
 .pstep .tt{flex:1;min-width:0;font-size:14px;overflow-wrap:anywhere}
 .dkr{display:flex;justify-content:space-between;gap:12px;width:100%;background:none;border:0;border-top:1px solid var(--line);min-height:40px;padding:0;font-size:13px;color:var(--ink);text-align:left}
-.dkr span:last-child{color:var(--ink2);font-variant-numeric:tabular-nums}.c3 .btn{white-space:normal;line-height:1.3;padding:0 8px;text-align:center}@media (max-width:480px){.brand{font-size:12px;letter-spacing:.04em}.hin{gap:6px}.hin>.btn{padding:0 8px;letter-spacing:.06em}}
+.dkr span:last-child{color:var(--ink2);font-variant-numeric:tabular-nums}.c3 .btn{white-space:normal;line-height:1.3;padding:0 8px;text-align:center}@media (max-width:480px){.brand{font-size:12px;letter-spacing:.04em}.hin{gap:6px}.hin>.btn{padding:0 10px}}
 @media (min-width:700px){
   dialog{width:min(560px,calc(100vw - 32px));margin:auto;border:1px solid var(--line2);border-radius:12px}
 }
@@ -231,7 +231,6 @@ a{color:var(--blue)}
   #mini .go{min-height:30px}
   .main{padding:24px 24px 100px}
   .main.wide{max-width:1040px}
-  .addbar{margin:-24px -24px 0;padding:14px 24px}
   .today{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px;align-items:start}
   .today>.o0{grid-column:1/-1}
   .colL,.colR{display:flex;flex-direction:column;gap:24px}
@@ -247,8 +246,7 @@ a{color:var(--blue)}
     <nav id="nav" aria-label="Sections"></nav>
     <div id="mini" hidden></div>
     <button class="skc" id="skc" data-a="nav" data-v="today"></button>
-    <span class="dot" id="dot" role="img" aria-label="Sync status"></span>
-    <button class="btn" data-a="sync">Sync</button>
+    <button class="syn" data-a="sync" aria-label="Sync and backup" title="Sync and backup"><span class="dot" id="dot"></span></button>
     <button class="btn" data-a="settings">Settings</button>
   </div>
 </header>
@@ -336,7 +334,7 @@ function setDue(tp,date){
 }
 
 function normalize(s){
-  s=s&&typeof s==='object'?s:{};
+  s=s&&typeof s==='object'?stripSample(s):{};
   var set=Object.assign(defaults(),s.settings||{});
   if((+s.v||0)<5)set.theme='dark';
   ['graduateAt','mins','dayTarget'].forEach(function(k){delete set[k]});
@@ -357,68 +355,44 @@ function normalize(s){
   var stats=s.stats&&typeof s.stats==='object'&&s.stats.days?s.stats:{days:{}};
   return {v:5,updatedAt:+s.updatedAt||0,settings:set,subs:subs,topics:topics,
     tests:(Array.isArray(s.tests)?s.tests:[]).map(function(x){var o=Object.assign({},x);o.topics=Array.isArray(o.topics)?o.topics:[];o.kind=o.kind==='project'?'project':'test';o.steps=Array.isArray(o.steps)?o.steps.map(function(st){return {id:st.id||uid(),title:String(st.title||''),done:!!st.done}}):[];o.done=!!o.done;return o}),
-    tasks:tasks,log:Array.isArray(s.log)?s.log:[],stats:stats,statsSample:!!s.statsSample,anki:normAnki(s.anki),best:+s.best||0};
+    tasks:tasks,log:Array.isArray(s.log)?s.log:[],stats:stats,anki:normAnki(s.anki),best:+s.best||0};
 }
-function normAnki(a){a=a&&typeof a==='object'?a:{};var o=function(x){return x&&typeof x==='object'?x:{}};return {on:a.on!==false,days:o(a.days),manual:o(a.manual)}}
-function sampleState(){
-  var t=today(),A=function(n){return addD(t,n)};
-  var subs=[{id:'s1',name:'Biochemistry',c:0},{id:'s2',name:'Organic chemistry',c:1},{id:'s3',name:'Statistics',c:2},{id:'s4',name:'German',c:3}];
-  var N=function(id,sub,title,due){return {id:id,sub:sub,title:title,phase:'new',fam:0,reps:0,interval:0,prev:0,last:null,due:due,suggest:null,capped:'',sample:true}};
-  var R=function(id,sub,title,o){return Object.assign({id:id,sub:sub,title:title,phase:'review',capped:'',sample:true},o)};
-  var topics=[
-    R('t1','s1','Glycolysis and its regulation',{fam:4,reps:2,prev:5,interval:12,last:A(-8),due:A(4),suggest:A(4)}),
-    N('t2','s1','TCA cycle and anaplerosis',A(1)),
-    N('t3','s1','Enzyme kinetics',A(3)),
-    N('t4','s1','Oxidative phosphorylation',null),
-    N('t5','s1','Lipid metabolism',A(0)),
-    R('t6','s2','SN1 and SN2',{fam:5,reps:4,prev:26,interval:82,last:A(-60),due:A(22),suggest:A(22)}),
-    R('t7','s2','Carbonyl chemistry',{fam:3,reps:1,prev:3,interval:3,last:A(-4),due:A(-1),suggest:A(-1)}),
-    N('t8','s2','Electrophilic aromatic substitution',null),
-    R('t9','s3','Hypothesis testing',{fam:4,reps:2,prev:5,interval:12,last:A(-12),due:A(0),suggest:A(0)}),
-    N('t10','s3','Regression assumptions',null),
-    R('t11','s4','Dative prepositions',{fam:5,reps:3,prev:26,interval:60,last:A(-35),due:A(25),suggest:A(25)}),
-    R('t12','s4','Perfekt and Präteritum',{fam:3,reps:1,prev:3,interval:3,last:A(-1),due:A(2),suggest:A(2)}),
-    N('t13','s4','Adjective endings',A(0)),
-    N('t14','s4','Subordinate clauses',null)
-  ];
-  var tests=[
-    {id:'x1',sub:'s1',title:'Collection',date:A(9),topics:['t1','t2','t3','t4','t5'],sample:true},
-    {id:'x2',sub:'s2',title:'Quiz',date:A(16),topics:['t6','t7','t8'],sample:true},
-    {id:'p1',kind:'project',sub:'s1',title:'Project proposal',date:A(19),topics:[],done:false,sample:true,steps:[{id:'p1a',title:'Agree a topic with supervisor',done:true},{id:'p1b',title:'Literature search',done:true},{id:'p1c',title:'Write outline',done:false},{id:'p1d',title:'First draft',done:false},{id:'p1e',title:'Final edit',done:false}]},
-    {id:'p2',kind:'project',sub:'s3',title:'Data analysis coursework',date:A(48),topics:[],done:false,sample:true,steps:[{id:'p2a',title:'Clean the dataset',done:false},{id:'p2b',title:'Run the regressions',done:false},{id:'p2c',title:'Write up results',done:false}]}
-  ];
-  var K=function(id,sub,title,due,o){return Object.assign({id:id,kind:sub?'hw':'todo',sub:sub,title:title,due:due,plan:'',done:false,sample:true},o||{})};
-  var tasks=[
-    K('h1','s2','Mechanisms worksheet',A(0)),
-    K('h2','','Email supervisor about project dates',A(0)),
-    K('h3','s1','Problem sheet 3: enzyme kinetics',A(1)),
-    K('h4','s3','Practical write-up',A(4)),
-    K('h5','s4','Essay draft',A(6)),
-    K('h7','s1','Problem sheet 2: glycolysis',A(-2),{done:true,doneOn:A(-2)})
-  ];
-  var days={};days[A(-1)]=3;days[A(-2)]=2;days[A(-3)]=4;days[A(-4)]=1;
-  var log=[{d:A(-1),title:'Problem sheet 2: glycolysis',sub:'s1',mins:50},{d:A(-1),title:'Carbonyl chemistry',sub:'s2',mins:25},{d:A(-2),title:'Free focus',sub:'',mins:35},{d:A(-3),title:'Hypothesis testing',sub:'s3',mins:45},{d:A(-3),title:'Essay draft',sub:'s4',mins:30},{d:A(-5),title:'Enzyme kinetics',sub:'s1',mins:40},{d:A(-6),title:'Free focus',sub:'',mins:25}].map(function(x){x.sample=true;return x});
-  var ad={};ad[A(-1)]=48;ad[A(-5)]=61;ad[A(-6)]=35;
-  topics[0].deck='Biochemistry::Metabolism';
-  return {v:5,updatedAt:0,settings:defaults(),subs:subs,topics:topics,tests:tests,tasks:tasks,log:log,stats:{days:days},statsSample:true,anki:{on:true,days:ad,manual:{},sample:true},best:9};
-}
-function onlySample(s){
-  var all=[].concat(s.topics,s.tasks,s.tests);
-  return all.length>0&&all.every(function(x){return x.sample});
+function normAnki(a){a=a&&typeof a==='object'?a:{};var o=function(x){return x&&typeof x==='object'?x:{}};return {on:a.on===true,days:o(a.days),manual:o(a.manual)}}
+var SAMPLE_SUBS={'Biochemistry':1,'Organic chemistry':1,'Statistics':1,'German':1};
+function stripSample(s){
+  var had=false,gone={},out=Object.assign({},s);
+  ['topics','tasks','tests','log'].forEach(function(k){
+    if(!Array.isArray(s[k]))return;
+    out[k]=s[k].filter(function(x){
+      if(x&&x.sample){had=true;if(k==='topics')gone[x.id]=1;return false}
+      return true;
+    });
+  });
+  if(!had&&!s.statsSample&&!(s.anki&&s.anki.sample))return s;
+  if(Array.isArray(out.tests))out.tests=out.tests.map(function(x){var o=Object.assign({},x);o.topics=(o.topics||[]).filter(function(t){return !gone[t]});return o});
+  if(had&&Array.isArray(s.subs)){
+    var used={};['topics','tasks','tests','log'].forEach(function(k){(out[k]||[]).forEach(function(x){if(x&&x.sub)used[x.sub]=1})});
+    out.subs=s.subs.filter(function(x){return used[x.id]||!SAMPLE_SUBS[x.name]});
+  }
+  if(s.statsSample){out.stats={days:{}};out.best=0}
+  if(s.anki&&s.anki.sample)out.anki=Object.assign({},s.anki,{days:{},manual:{}});
+  delete out.statsSample;
+  if(out.anki)delete out.anki.sample;
+  return out;
 }
 function loadLocal(){
   var keys=[KEY].concat(OLD);
   for(var i=0;i<keys.length;i++){
     try{
       var raw=localStorage.getItem(keys[i]);
-      if(raw){var s=JSON.parse(raw);if(s&&typeof s==='object'){var n=normalize(s);if(i>0&&onlySample(n))return null;return n}}
+      if(raw){var s=JSON.parse(raw);if(s&&typeof s==='object')return normalize(s)}
     }catch(e){}
   }
   return null;
 }
 function persistLocal(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
-var state=loadLocal()||normalize(sampleState());
-var view='today';try{var tv=localStorage.getItem(TABKEY);if(tv)view=tv}catch(e){}
+var state=loadLocal()||normalize({v:5});
+var view='today';try{var tv=localStorage.getItem(TABKEY);if(tv)view=tv==='tests'||tv==='projects'?'deadlines':tv}catch(e){}
 var addType='test',topicFilter='all',startPick={},openFolds={},lastSub='',lastHwDue='',dlgCtx=null,undoSnap=null,toastT=null;
 var tmode='focus',tDraft=null,tTask=null;
 var timer=null;try{timer=JSON.parse(localStorage.getItem(TIMERKEY)||'null')}catch(e){}
@@ -595,7 +569,6 @@ var scs=function(id){return getSub(id)?'--sc:'+subColour(id)+';':''};
 var subTag=function(id){var n=subName(id);return n?'<span class="tag sub"><i class="sd" style="background:'+subColour(id)+'"></i>'+esc(n)+'</span>':''};
 var subSpan=function(id){var n=subName(id);return n?'<span class="sub"><i class="sd" style="background:'+subColour(id)+'"></i>'+esc(n)+'</span>':''};
 var effDate=function(h){return h.plan||h.due||''};
-var hasSample=function(){return state.topics.some(function(x){return x.sample})||state.tasks.some(function(x){return x.sample})||state.tests.some(function(x){return x.sample})};
 function bump(n){
   var d=state.stats.days,t=today();
   d[t]=Math.max(0,(d[t]||0)+n);if(!d[t])delete d[t];
@@ -651,7 +624,7 @@ function startCard(tp){
 }
 function nextTestCard(nt,t0){
   var nd=diff(t0,nt.date),n=nt.topics.length;
-  return '<button class="card sc o1" data-a="nav" data-v="tests" style="'+scs(nt.sub)+'display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 16px;text-align:left;color:var(--ink);width:100%"><span style="display:flex;flex-direction:column;gap:6px;min-width:0">'+subTag(nt.sub)+'<span style="font-size:17px;line-height:1.3">'+esc(nt.title)+'</span><span class="lab t">'+esc(label(nt.date))+(n?' · '+plural(n,'topic'):'')+'</span></span><span class="cd"><b style="font-size:38px">'+(nd===0?'Today':nd)+'</b><span class="lab">'+(nd===0?'':nd===1?'day to go':'days to go')+'</span></span></button>';
+  return '<button class="card sc o1" data-a="nav" data-v="deadlines" style="'+scs(nt.sub)+'display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 16px;text-align:left;color:var(--ink);width:100%"><span style="display:flex;flex-direction:column;gap:6px;min-width:0">'+subTag(nt.sub)+'<span style="font-size:17px;line-height:1.3">'+esc(nt.title)+'</span><span class="lab t">'+esc(label(nt.date))+(n?' · '+plural(n,'topic'):'')+'</span></span><span class="cd"><b style="font-size:38px">'+(nd===0?'Today':nd)+'</b><span class="lab">'+(nd===0?'':nd===1?'day to go':'days to go')+'</span></span></button>';
 }
 function dueText(h){
   var t0=today(),d=h.due,out=[];
@@ -683,6 +656,7 @@ function viewToday(){
   var t0=today(),rv=dueReviews(t0),st=dueStarts(t0),hw=dueTasks(t0);
   var done=state.stats.days[t0]||0,left=rv.length+st.length+hw.length,total=done+left,sk=streak(),act=activeDays(),risk=!act[t0];
   var nt=state.tests.filter(function(x){var d=diff(t0,x.date);return x.kind!=='project'&&d>=0&&d<=21}).sort(function(a,b){return a.date.localeCompare(b.date)})[0];
+  if(!state.subs.length&&!state.topics.length&&!state.tasks.length&&!state.tests.length)return '<div class="welcome"><h2>Welcome</h2><p>Set up your plan in three steps.</p><ol><li>Add your subjects</li><li>Add topics to study</li><li>Add tests, homework and projects</li></ol><div class="acts"><button class="btn pri tall" data-a="new-sub">Add a subject</button><button class="btn tall" data-a="nav" data-v="topics">Add topics</button></div></div>';
   var h='<div class="today"><div class="o0" style="display:flex;flex-direction:column;gap:8px">'+
     '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><span class="lab" style="color:var(--ink);font-weight:700">'+esc(label(t0))+'</span><span class="lab">'+(total?done+' of '+total+' done':'')+'</span></div>'+
     '<div class="bar" role="img" aria-label="'+done+' of '+total+' done"><i style="width:'+(total?Math.round(done/total*100):0)+'%"></i></div>';
@@ -712,7 +686,6 @@ function viewToday(){
   f+=fold('week','Coming up this week',rows);
   var nod=state.topics.filter(function(tp){return tp.phase==='new'&&!tp.due}).length;
   if(nod)f+='<button class="lk" data-a="nodate"><span>'+(nod===1?'1 topic has':nod+' topics have')+' no start date yet</span><span>›</span></button>';
-  if(hasSample())f+='<p class="lab t" style="margin:10px 0 0;display:flex;align-items:center;gap:10px">Showing example data <button class="btn sm" data-a="clear-sample">Remove example data</button></p>';
   R+='<div class="o7">'+f+'</div>';
   return h+'<div class="colL">'+L+'</div><div class="colR">'+R+'</div></div>';
 }
@@ -723,8 +696,8 @@ function viewTopics(){
   if(topicFilter==='nodate'&&!ndN)topicFilter='all';
   var sel=lastSub&&getSub(lastSub)?lastSub:(state.subs[0]?state.subs[0].id:'');
   var h='<div class="addbar"><div class="ar"><label class="sr" for="aSub">Subject</label><select class="inp" id="aSub" style="width:128px;flex:none;font-size:13px">'+subOptions(sel,'No subject')+'</select>'+
-    '<label class="sr" for="aTopic">New topic</label><input class="inp grow" id="aTopic" placeholder="New topic" autocomplete="off" enterkeyhint="done"><button class="btn pri tall" data-a="add-topic">Add</button></div>'+
-    '<div class="chips">'+[['all','All',state.topics.length],['new','Not started',newN],['review','Started',revN]].concat(ndN?[['nodate','Not planned',ndN]]:[]).map(function(c){return '<button class="chip" data-a="tfilter" data-f="'+c[0]+'" aria-pressed="'+(topicFilter===c[0])+'">'+c[1]+' '+c[2]+'</button>'}).join('')+'</div></div>';
+    '<label class="sr" for="aTopic">New topic</label><input class="inp grow" id="aTopic" placeholder="New topic" autocomplete="off" enterkeyhint="done"><button class="btn pri tall" data-a="add-topic">Add</button></div></div>';
+  if(state.topics.length)h+='<div class="chips">'+[['all','All',state.topics.length],['new','Not started',newN],['review','Started',revN]].concat(ndN?[['nodate','Not planned',ndN]]:[]).map(function(c){return '<button class="chip" data-a="tfilter" data-f="'+c[0]+'" aria-pressed="'+(topicFilter===c[0])+'">'+c[1]+' '+c[2]+'</button>'}).join('')+'</div>';
   var pass=function(t){return topicFilter==='all'||(topicFilter==='nodate'?t.phase==='new'&&!t.due:t.phase===topicFilter)};
   var groups=state.subs.map(function(s){return s.id}).concat(['']),any=false;
   groups.forEach(function(gid){
@@ -734,7 +707,7 @@ function viewTopics(){
     h+='<section class="sec" style="gap:6px"><div class="gh">'+(gid?subTag(gid):'<span class="tag" style="color:var(--ink3)">No subject</span>')+'<span class="lab">'+list.length+'</span></div>'+
       list.map(function(t){return '<button class="trow" data-a="edit-topic" data-id="'+t.id+'"><span class="tn">'+esc(t.title)+'</span>'+topicPill(t)+'</button>'}).join('')+'</section>';
   });
-  if(!any)h+='<div class="empty"><span class="lab" style="color:var(--ink)">'+(state.topics.length?'No topics yet':'Add a topic above')+'</span></div>';
+  if(!any)h+='<div class="empty" style="min-height:0;padding:24px 0"><span class="lab" style="color:var(--ink)">'+(state.topics.length?'No topics match this filter':state.subs.length?'Add your first topic above':'Add a subject below, then your first topic')+'</span></div>';
   h+='<section class="sec" style="border-top:1px solid var(--line);padding-top:14px"><span class="lab">Subjects</span><div class="chips">'+state.subs.map(function(s){var c='var(--'+SUBC[s.c%SUBC.length]+')';return '<button class="chip" data-a="edit-sub" data-id="'+s.id+'"><i class="sd" style="background:'+c+'"></i>'+esc(s.name)+'</button>'}).join('')+'<button class="chip" data-a="new-sub" style="border-style:dashed">+ Subject</button></div></section>';
   return h;
 }
@@ -779,7 +752,7 @@ function testCard(x){
       '<div class="bar"><i style="width:'+Math.round(i.started/i.tops.length*100)+'%"></i></div>'+
       (i.unsched.length?'<p class="note">No start date yet: '+esc(i.unsched.slice(0,2).map(function(t){return t.title}).join(', '))+(i.unsched.length>2?' and '+(i.unsched.length-2)+' more':'')+'</p>':'')+'</div>';
   }
-  if(!past)h+='<div class="vrow">'+(i.unsched.length?'<button class="v one" data-a="spread"  data-id="'+x.id+'">Plan start dates</button>':'')+'<button class="v one" data-a="edit-test" data-id="'+x.id+'">Edit</button></div>';
+  if(!past&&i.unsched.length)h+='<div class="vrow"><button class="v one" data-a="spread"  data-id="'+x.id+'">Plan start dates</button></div>';
   return h+'</div>';
 }
 function activeProjects(){return state.tests.filter(function(x){return x.kind==='project'&&!x.done}).sort(function(a,b){return a.date.localeCompare(b.date)})}
@@ -801,24 +774,22 @@ function projectCard(x,compact){
   return h+'</div>';
 }
 
-function viewTests(){
-  var t0=today(),up=state.tests.filter(function(x){return x.kind!=='project'&&diff(t0,x.date)>=0}).sort(function(a,b){return a.date.localeCompare(b.date)});
-  var past=state.tests.filter(function(x){return x.kind!=='project'&&diff(t0,x.date)<0}).sort(function(a,b){return b.date.localeCompare(a.date)});
-  var sel=lastSub&&getSub(lastSub)?lastSub:(state.subs[0]?state.subs[0].id:'');
-  var h='<div class="addbar"><div class="ar"><label class="sr" for="aTest">New test</label><input class="inp grow" id="aTest" placeholder="New test" autocomplete="off" enterkeyhint="done"><button class="btn pri tall" data-a="add-test">Add</button></div>'+
-    '<div class="g2"><label class="sr" for="aTestSub">Subject</label><select class="inp" id="aTestSub" style="font-size:13px">'+subOptions(sel,'No subject')+'</select><label class="sr" for="aTestDate">Date</label><input class="inp" type="date" id="aTestDate" style="font-size:13px" value="'+esc(addD(t0,14))+'"></div></div>';
-  h+='<section class="sec" style="gap:12px"><span class="lab">Tests · '+up.length+'</span>'+(up.length?up.map(function(x){return testCard(x)}).join(''):'<div class="empty" style="min-height:0;padding:20px 0"><span class="lab" style="color:var(--ink)">No upcoming tests</span></div>')+'</section>';
-  if(past.length)h+=fold('past','Past · '+past.length,past.map(function(x){return testCard(x)}).join(''));
-  return h;
-}
-function viewProjects(){
-  var t0=today(),pj=activeProjects();
+var dlDraft='';
+function viewDeadlines(){
+  var t0=today(),proj=addType==='project';
+  var tests=state.tests.filter(function(x){return x.kind!=='project'}),pj=activeProjects();
+  var up=tests.filter(function(x){return diff(t0,x.date)>=0}).sort(function(a,b){return a.date.localeCompare(b.date)});
+  var past=tests.filter(function(x){return diff(t0,x.date)<0}).sort(function(a,b){return b.date.localeCompare(a.date)});
   var fin=state.tests.filter(function(x){return x.kind==='project'&&x.done}).sort(function(a,b){return b.date.localeCompare(a.date)});
   var sel=lastSub&&getSub(lastSub)?lastSub:(state.subs[0]?state.subs[0].id:'');
-  var h='<div class="addbar"><div class="ar"><label class="sr" for="aProj">New project</label><input class="inp grow" id="aProj" placeholder="New project" autocomplete="off" enterkeyhint="done"><button class="btn pri tall" data-a="add-project">Add</button></div>'+
-    '<div class="g2"><label class="sr" for="aProjSub">Subject</label><select class="inp" id="aProjSub" style="font-size:13px">'+subOptions(sel,'No subject')+'</select><label class="sr" for="aProjDate">Due</label><input class="inp" type="date" id="aProjDate" style="font-size:13px" value="'+esc(addD(t0,30))+'"></div></div>';
-  h+='<section class="sec" style="gap:12px"><span class="lab">Projects · '+pj.length+'</span>'+(pj.length?pj.map(function(x){return projectCard(x)}).join(''):'<div class="empty" style="min-height:0;padding:20px 0"><span class="lab" style="color:var(--ink)">No projects</span></div>')+'</section>';
-  if(fin.length)h+=fold('pjdone','Finished · '+fin.length,fin.map(function(x){return projectCard(x)}).join(''));
+  var h='<div class="addbar"><div class="seg" role="group" aria-label="Type">'+[['test','Test'],['project','Project']].map(function(m){return '<button data-a="dl-type" data-t="'+m[0]+'" aria-pressed="'+(addType===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>'+
+    '<div class="ar"><label class="sr" for="aDl">Name</label><input class="inp grow" id="aDl" placeholder="'+(proj?'Project name':'Test name')+'" autocomplete="off" enterkeyhint="done" value="'+esc(dlDraft)+'"><button class="btn pri tall" data-a="add-dl">Add</button></div>'+
+    '<div class="g2"><label class="sr" for="aDlSub">Subject</label><select class="inp" id="aDlSub" style="font-size:13px">'+subOptions(sel,'No subject')+'</select><label class="sr" for="aDlDate">'+(proj?'Due':'Date')+'</label><input class="inp" type="date" id="aDlDate" style="font-size:13px" value="'+esc(addD(t0,proj?30:14))+'"></div></div>';
+  if(up.length)h+='<section class="sec" style="gap:12px"><span class="lab">Tests · '+up.length+'</span>'+up.map(function(x){return testCard(x)}).join('')+'</section>';
+  if(pj.length)h+='<section class="sec" style="gap:12px"><span class="lab">Projects · '+pj.length+'</span>'+pj.map(function(x){return projectCard(x)}).join('')+'</section>';
+  if(!up.length&&!pj.length)h+='<div class="empty" style="min-height:0;padding:24px 0"><span class="lab" style="color:var(--ink)">No upcoming tests or projects</span></div>';
+  if(past.length)h+=fold('past','Past tests · '+past.length,past.map(function(x){return testCard(x)}).join(''));
+  if(fin.length)h+=fold('pjdone','Finished projects · '+fin.length,fin.map(function(x){return projectCard(x)}).join(''));
   return h;
 }
 
@@ -934,16 +905,16 @@ function viewTimer(){
       h+='<div class="c3"><button class="btn big" data-a="t-add" data-n="5">+5 min</button>'+(timer.mode==='focus'?'<button class="btn big" data-a="t-break">Start '+(state.settings.breakMins||5)+' min break</button>':'<button class="btn big" data-a="t-again">Start focus</button>')+'<button class="btn big danger" data-a="t-stop">Close</button></div>';
       if(timer.key&&timer.mode==='focus')h+='<button class="btn go" data-a="t-done" style="min-height:60px;font-size:13px">Mark as finished</button>';
     }else{
-      if(timer.mode!=='watch')h+='<div class="c3"><button class="btn big" data-a="t-add" data-n="-5">−5</button><button class="btn big" data-a="t-add" data-n="5">+5</button><button class="btn big" data-a="t-set">Change</button></div>';
+      if(timer.mode!=='watch')h+='<div class="g2"><button class="btn big" data-a="t-add" data-n="-5">−5 min</button><button class="btn big" data-a="t-add" data-n="5">+5 min</button></div>';
       h+='<button class="btn pri" data-a="t-toggle" style="min-height:64px;font-size:14px">'+(timer.running?'Pause':'Resume')+'</button>';
       h+='<div class="g2">'+(timer.key&&timer.mode==='focus'?'<button class="btn big" style="color:var(--green);border-color:var(--green)" data-a="t-done">Mark as finished</button>':'<span></span>')+'<button class="btn big danger" data-a="t-stop">Stop</button></div>';
     }
   }
-  return h+statsHTML();
+  return timer?h:h+statsHTML();
 }
 
-var VIEWS={today:['Today',viewToday],topics:['Topics',viewTopics],homework:['Homework',viewHomework],tests:['Tests',viewTests],projects:['Projects',viewProjects],timer:['Timer',viewTimer]};
-var ORDER=['today','topics','homework','tests','projects','timer'];
+var VIEWS={today:['Today',viewToday],topics:['Topics',viewTopics],homework:['Homework',viewHomework],deadlines:['Deadlines',viewDeadlines],timer:['Timer',viewTimer]};
+var ORDER=['today','topics','homework','deadlines','timer'];
 function render(){
   if(!VIEWS[view])view='today';
   var m=$('#main'),ae=document.activeElement,keepId=ae&&ae.id&&m.contains(ae)?ae.id:null,keepVal=keepId&&ae.tagName==='INPUT'?ae.value:null;
@@ -1081,7 +1052,7 @@ function openSettings(){
     '<div class="field"><span class="lab">Anki</span>'+chk('sAnki',state.anki.on,'Show Anki on Today')+'<span class="stl" id="aStat">'+ankiStatHTML()+'</span><div class="g2"><button class="btn tall" data-a="anki-connect">'+(ankiOn?'Refresh':'Connect Anki')+'</button>'+(ankiOn?'<button class="btn tall danger" data-a="anki-off">Disconnect</button>':'<span></span>')+'</div><p class="note">Requires Anki open on this computer with the AnkiConnect add-on (code 2055492159)</p></div>'+
     '<div class="field"><label class="lab" for="sTheme">Theme</label><select class="inp" id="sTheme"><option value="dark"'+(S.theme==='dark'?' selected':'')+'>Dark</option><option value="light"'+(S.theme==='light'?' selected':'')+'>Light</option><option value="auto"'+(S.theme==='auto'?' selected':'')+'>Match device</option></select></div>'+
     '<div class="acts"><button class="btn pri" data-a="set-save">Save</button><button class="btn" data-a="close">Cancel</button></div>'+
-    '<div class="field" style="border-top:1px solid var(--line);padding-top:16px"><span class="lab">Start over</span><button class="btn danger tall" data-a="reset">Delete everything</button></div>','Settings');
+    '<div class="field" style="border-top:1px solid var(--line);padding-top:16px"><span class="lab">Data</span><div class="g2"><button class="btn tall" data-a="sync">Sync and backup</button><button class="btn danger tall" data-a="reset">Delete everything</button></div></div>','Settings');
 }
 function openSync(){
   dlgCtx={kind:'sync'};
@@ -1173,10 +1144,11 @@ var A={
     state.tasks.push({id:uid(),kind:sub?'hw':'todo',sub:sub,title:t,due:due,plan:'',done:false});
     commit();var i2=$('#aHw');if(i2){i2.value='';i2.focus()}
   },
-  'add-test':function(){
-    var t=val('aTest').trim();if(!t){var i=$('#aTest');if(i)i.focus();return}
-    var sub=val('aTestSub');lastSub=sub;
-    openTest(null,{title:t,sub:sub,date:val('aTestDate'),type:'test'});
+  'dl-type':function(el){dlDraft=val('aDl');addType=el.dataset.t;render();var i=$('#aDl');if(i)i.focus()},
+  'add-dl':function(){
+    var t=val('aDl').trim();if(!t){var i=$('#aDl');if(i)i.focus();return}
+    var sub=val('aDlSub');lastSub=sub;dlDraft='';
+    openTest(null,{title:t,sub:sub,date:val('aDlDate'),type:addType});
   },
   spread:function(el){
     var x=getTest(el.dataset.id);if(!x)return;
@@ -1229,7 +1201,6 @@ var A={
     closeDlg();commit();
   },
   'tx-type':function(el){readTestSheet();dlgCtx.v.type=el.dataset.t;renderTestSheet()},
-  'add-project':function(){var t=val('aProj').trim();if(!t){var i=$('#aProj');if(i)i.focus();return}var sub=val('aProjSub');lastSub=sub;openTest(null,{title:t,sub:sub,date:val('aProjDate'),type:'project'})},
   'step-done':function(el){
     var x=getTest(el.dataset.id);if(!x)return;var q=x.steps.find(function(z){return z.id===el.dataset.s});if(!q)return;
     var snap=snapshot();q.done=true;bump(1);
@@ -1266,20 +1237,6 @@ var A={
     if(!el.dataset.sure){el.dataset.sure='1';el.textContent='Confirm. This cannot be undone';return}
     var th=state.settings.theme;state=normalize({v:5});state.settings.theme=th;timer=null;saveTimer();startPick={};closeDlg();commit();
   },
-  'clear-sample':function(){
-    var snap=snapshot(),ids={};state.topics.forEach(function(x){if(x.sample)ids[x.id]=1});
-    state.topics=state.topics.filter(function(x){return !x.sample});
-    state.tests=state.tests.filter(function(x){return !x.sample});
-    state.tasks=state.tasks.filter(function(x){return !x.sample});
-    state.log=state.log.filter(function(x){return !x.sample});
-    state.tests.forEach(function(x){x.topics=x.topics.filter(function(t){return !ids[t]})});
-    var used={};[].concat(state.topics,state.tasks,state.tests,state.log).forEach(function(x){if(x.sub)used[x.sub]=1});
-    state.subs=state.subs.filter(function(s){return used[s.id]});
-    if(state.statsSample){state.stats={days:{}};state.statsSample=false;state.best=0}
-    if(state.anki.sample){state.anki.days={};state.anki.manual={};delete state.anki.sample}
-    if(timer&&timer.key&&!entryForKey(timer.key)){timer=null;saveTimer()}
-    startPick={};commit();toast('Example data cleared','',snap);
-  },
   'g-connect':function(){
     var tok=val('gTok').trim(),id=val('gId').trim();
     if(!tok){setDot('err','Enter a token first');return}
@@ -1307,12 +1264,6 @@ var A={
   },
   't-toggle':function(){pauseToggle()},
   't-add':function(el){if(timer)retime(timer.total+(+el.dataset.n)*60)},
-  't-set':function(){
-    dlgCtx={kind:'tset'};
-    openDlg('<h2>Time remaining</h2><div class="field"><label class="lab" for="tSet">Minutes</label><input class="inp" id="tSet" type="number" inputmode="numeric" min="1" max="300" value="'+Math.max(1,Math.round((tLeft()||0)/60))+'"></div><div class="acts"><button class="btn pri" data-a="t-set-save">Set</button><button class="btn" data-a="close">Cancel</button></div>','Time left');
-    var i=$('#tSet');if(i){i.focus();i.select()}
-  },
-  't-set-save':function(){var m=Math.max(1,Math.min(300,Math.round(+val('tSet')||1)));closeDlg();retime(elapsed()+m*60)},
   't-break':function(){startTimer({title:'Break',mode:'break',mins:state.settings.breakMins||5})},
   't-again':function(){stopTimer();tmode='focus';tDraft=null;render()},
   't-done':function(){
@@ -1330,7 +1281,7 @@ var A={
   'anki-connect':function(){if(ankiOn&&!ankiErr)ankiRefresh();else ankiConnect()},
   'anki-off':function(){ankiOn=false;ankiErr='';saveAnki();ankiStatus();render();openSettings()}
 };
-function go(v){view=v;try{localStorage.setItem(TABKEY,view)}catch(e){}render();window.scrollTo(0,0)}
+function go(v){view=v;$('#toast').hidden=true;try{localStorage.setItem(TABKEY,view)}catch(e){}render();window.scrollTo(0,0)}
 
 document.addEventListener('click',function(e){
   var el=e.target.closest('[data-a]');if(!el)return;
@@ -1340,7 +1291,7 @@ document.addEventListener('toggle',function(e){var d=e.target;if(d&&d.dataset&&d
 document.addEventListener('change',function(e){
   var t=e.target;
   if(t.id==='aSub'){lastSub=t.value}
-  else if(t.id==='aHwSub'||t.id==='aTestSub'||t.id==='aProjSub'){lastSub=t.value}
+  else if(t.id==='aHwSub'||t.id==='aDlSub'){lastSub=t.value}
   else if(t.id==='aHwDue'){lastHwDue=t.value}
   else if(t.id==='tTask'){tTask=t.value||null}
   else if(t.id==='tMin'){tDraft=Math.max(1,Math.min(300,Math.round(+t.value||1)));render()}
@@ -1361,7 +1312,7 @@ document.addEventListener('input',function(e){
 document.addEventListener('keydown',function(e){
   var ae=document.activeElement,tag=ae&&ae.tagName,typing=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT';
   if(e.key==='Enter'&&tag==='INPUT'){
-    var map={aTopic:'add-topic',aHw:'add-hw',aTest:'add-test',aProj:'add-project',tSet:'t-set-save',gTok:'g-connect',gId:'g-connect',mvDate:'mv-save',tMin:'t-start'};
+    var map={aTopic:'add-topic',aHw:'add-hw',aDl:'add-dl',gTok:'g-connect',gId:'g-connect',mvDate:'mv-save',tMin:'t-start'};
     if(map[ae.id]){e.preventDefault();A[map[ae.id]]();return}
     if(dlg.open&&dlgCtx&&ae.type!=='checkbox'){
       var s={topic:'tp-save',task:'task-save',test:'test-save',sub:'sub-save',settings:'set-save'}[dlgCtx.kind];
@@ -1370,10 +1321,10 @@ document.addEventListener('keydown',function(e){
   }
   if(dlg.open||typing||e.ctrlKey||e.metaKey||e.altKey)return;
   var k=e.key;
-  if(/^[1-6]$/.test(k)){go(ORDER[+k-1]);return}
+  if(/^[1-5]$/.test(k)){go(ORDER[+k-1]);return}
   if(k==='n'){
     e.preventDefault();
-    var id={topics:'aTopic',homework:'aHw',tests:'aTest',projects:'aProj'}[view];
+    var id={topics:'aTopic',homework:'aHw',deadlines:'aDl'}[view];
     if(id&&$('#'+id))$('#'+id).focus();else openTask(null,{due:today()});
     return;
   }
