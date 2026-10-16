@@ -11,7 +11,7 @@
   --red:#c4001a; --orange:#b34700; --amber:#8a5300; --blue:#0044cc; --green:#1a1a1a; --grn:#1f7a3d; --pink:#b0105f; --purple:#6a2fb8; --teal:#00706a;
   --redline:#c4001a; --focus:#0044cc;
   --f:"Atkinson Hyperlegible Mono",ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
-  --navh:60px; --hh:61px; --minih:0px;
+  --navh:64px; --hh:61px; --minih:0px;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -347,8 +347,38 @@ dialog::backdrop{background:rgba(0,0,0,.55)}
 .welcome h2{font-size:20px}
 .empty .lab{text-transform:none;letter-spacing:0}
 ::selection{background:var(--ink);color:var(--bg)}
+/* ---- navigation, sheets and touch ---- */
+.nb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.nb svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.hd .btn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink);text-decoration:none;padding:0 12px;font-weight:600}
+.hd .btn.pri:hover{background:var(--ink2);color:var(--bg);border-color:var(--ink2)}
+.hd .setb{padding:0 8px;text-decoration:none;min-width:40px}
+.setb svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6}
+.setl{display:none}
+button.ct::after{content:'›';margin-left:8px;color:var(--ink3);font-weight:400}
+.qrow{font-size:12px;color:var(--ink2);padding:0 16px 10px}
+.sc>.qrow{padding-left:20px}
+.racts{display:flex;gap:2px;flex:none}
+.hw .btn.sm{padding:0 8px}
+.mvg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.addg{display:flex;flex-direction:column;gap:8px}
+.addi{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;background:var(--bg);border:1px solid var(--line);padding:12px 14px;min-height:60px;color:var(--ink)}
+.addi:hover{background:var(--s2);border-color:var(--ink3)}
+.addi b{font-weight:600;font-size:15px}
+.addi span{font-size:13px;color:var(--ink3)}
+.btn:disabled{opacity:.4;cursor:default;pointer-events:none}
+.sh .acts{position:sticky;bottom:calc(-28px - env(safe-area-inset-bottom,0px));z-index:2;background:var(--s1);padding:12px 0 calc(12px + env(safe-area-inset-bottom,0px));margin:-12px 0 calc(-28px - env(safe-area-inset-bottom,0px))}
+@media (pointer:coarse){
+  .inp,select.inp{font-size:16px!important}
+  .card .btn.sm,.hw .btn.sm,.pstep .btn.sm{min-height:40px}
+}
 @media (min-width:900px){
   .nb{border-right:0;min-height:64px;font-size:12px}
+  .nb{flex-direction:row;gap:0;padding:0 12px}
+  .nb svg{display:none}
+  .setl{display:inline}
+  .setb svg{display:none}
+  .hd .setb{text-decoration:underline}
   .nb[aria-current="page"]{background:var(--ink);color:var(--bg)}
   #nav{border-top:0;gap:0}
 }
@@ -364,7 +394,8 @@ dialog::backdrop{background:rgba(0,0,0,.55)}
     <div id="mini" hidden></div>
     <button class="skc" id="skc" data-a="nav" data-v="today"></button>
     <button class="syn" data-a="sync" aria-label="Sync and backup" title="Sync and backup"><span class="dot" id="dot"></span></button>
-    <button class="btn" data-a="settings">Settings</button>
+    <button class="btn pri addb" data-a="add-menu" aria-label="Add something">+ Add</button>
+    <button class="btn setb" data-a="settings" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="setl">Settings</span></button>
   </div>
 </header>
 <main class="main" id="main"></main>
@@ -722,7 +753,7 @@ function subOptions(sel,none){
 }
 
 function famRow(tp,start){
-  var h=(start?'<div class="qrow"><span>Rate your knowledge</span><span>next review in</span></div>':'')+'<div class="vrow">';
+  var h='<div class="qrow"><span>How well do you know it?</span><span>Next review</span></div><div class="vrow">';
   for(var f=1;f<=5;f++){var g=previewGap(tp,f,start);h+='<button class="v" data-a="'+(start?'start-rate':'rate')+'" data-id="'+tp.id+'" data-f="'+f+'" aria-label="'+FAMS[f-1]+', next review in '+plural(g,'day')+'">'+FAMS[f-1]+'<span>'+plural(g,'day')+'</span></button>'}
   return h+'</div>';
 }
@@ -731,7 +762,7 @@ function reviewCard(tp){
   if(od>0)bits.push('<span class="bad">'+(od===1?'Overdue since yesterday':'Overdue by '+od+' days')+'</span>');
   if(nt&&nt.d<=14)bits.push(esc(nt.test.title)+(nt.d===0?' today':nt.d===1?' tomorrow':' in '+nt.d+' days'));
   if(dk)bits.push(dk);
-  return '<div class="card sc" style="'+scs(tp.sub)+'"><div class="cb"><div class="ch">'+subTag(tp.sub)+'<button class="btn sm" data-a="later" data-id="'+tp.id+'" style="margin-left:auto">Tomorrow</button></div>'+
+  return '<div class="card sc" style="'+scs(tp.sub)+'"><div class="cb"><div class="ch">'+subTag(tp.sub)+'<button class="btn sm" data-a="move" data-key="r:'+tp.id+'" style="margin-left:auto">Move</button></div>'+
     '<button class="ct" data-a="edit-topic" data-id="'+tp.id+'">'+esc(tp.title)+'</button>'+(bits.length?'<span class="lab t">'+bits.join(' · ')+'</span>':'')+'</div>'+famRow(tp,false)+'</div>';
 }
 function startCard(tp){
@@ -743,7 +774,7 @@ function startCard(tp){
   }
   return '<div class="card sc'+(pick?' picking':'')+'" style="'+scs(tp.sub)+'"><div class="cb"><div class="ch">'+subTag(tp.sub)+(pick?'<button class="btn sm" data-a="start-back" data-id="'+tp.id+'" style="margin-left:auto">Back</button>':'')+'</div>'+
     '<button class="ct" data-a="edit-topic" data-id="'+tp.id+'">'+esc(tp.title)+'</button>'+(bits.length?'<span class="lab t">'+bits.join(' · ')+'</span>':'')+'</div>'+
-    (pick?famRow(tp,true):'<div class="vrow"><button class="v one" data-a="later" data-id="'+tp.id+'">Tomorrow</button><button class="v one" data-a="move" data-key="r:'+tp.id+'">Pick a date</button><button class="v one" data-a="start" data-id="'+tp.id+'">Mark as started</button></div>')+'</div>';
+    (pick?famRow(tp,true):'<div class="vrow"><button class="v one" data-a="move" data-key="r:'+tp.id+'">Move</button><button class="v one" data-a="start" data-id="'+tp.id+'">Start now</button></div>')+'</div>';
 }
 function nextTestCard(nt,t0){
   var nd=diff(t0,nt.date),n=nt.topics.length;
@@ -763,7 +794,7 @@ function hwRow(h,showDue){
   var over=!h.done&&h.due&&diff(h.due,today())>0;
   return '<div class="hw sc'+(over?' over':'')+(h.done?' donev':'')+'" style="'+scs(h.sub)+'"><button class="chk" data-a="done" data-id="'+h.id+'" aria-pressed="'+h.done+'" aria-label="'+(h.done?'Not done: ':'Done: ')+esc(h.title)+'"></button>'+
     '<button class="hb" data-a="edit-task" data-id="'+h.id+'"><span class="tt'+(h.done?' x':'')+'">'+esc(h.title)+'</span><span class="lab t">'+parts.join(' · ')+'</span></button>'+
-    (h.done?'':'<button class="btn sm" data-a="focus" data-key="k:'+h.id+'">Focus</button>')+'</div>';
+    (h.done?'':'<span class="racts"><button class="btn sm" data-a="move" data-key="k:'+h.id+'">Move</button><button class="btn sm" data-a="focus" data-key="k:'+h.id+'">Focus</button></span>')+'</div>';
 }
 function topicPill(tp){
   var t0=today();
@@ -818,8 +849,8 @@ function viewTopics(){
   state.topics.forEach(function(t){if(t.phase==='new'){newN++;if(!t.due)ndN++}else revN++});
   if(topicFilter==='nodate'&&!ndN)topicFilter='all';
   var sel=lastSub&&getSub(lastSub)?lastSub:(state.subs[0]?state.subs[0].id:'');
-  var h='<div class="addbar"><div class="ar"><label class="sr" for="aSub">Subject</label><select class="inp" id="aSub" style="width:128px;flex:none;font-size:13px">'+subOptions(sel,'No subject')+'</select>'+
-    '<label class="sr" for="aTopic">New topic</label><input class="inp grow" id="aTopic" placeholder="New topic" autocomplete="off" enterkeyhint="done"><button class="btn pri tall" data-a="add-topic">Add</button></div></div>';
+  var h='<div class="addbar"><div class="ar"><label class="sr" for="aTopic">New topic</label><input class="inp grow" id="aTopic" placeholder="New topic" autocomplete="off" enterkeyhint="done"><button class="btn pri tall" data-a="add-topic">Add</button></div>'+
+    '<label class="sr" for="aSub">Subject</label><select class="inp" id="aSub">'+subOptions(sel,'No subject')+'</select></div>';
   if(state.topics.length)h+='<div class="chips">'+[['all','All',state.topics.length],['new','Not started',newN],['review','Started',revN]].concat(ndN?[['nodate','Not planned',ndN]]:[]).map(function(c){return '<button class="chip" data-a="tfilter" data-f="'+c[0]+'" aria-pressed="'+(topicFilter===c[0])+'">'+c[1]+' '+c[2]+'</button>'}).join('')+'</div>';
   var pass=function(t){return topicFilter==='all'||(topicFilter==='nodate'?t.phase==='new'&&!t.due:t.phase===topicFilter)};
   var groups=state.subs.map(function(s){return s.id}).concat(['']),any=false;
@@ -839,7 +870,7 @@ function viewHomework(){
   open.sort(function(a,b){return (a.due||'9999').localeCompare(b.due||'9999')});
   var sel=lastSub&&getSub(lastSub)?lastSub:'';
   var h='<div class="addbar"><div class="ar"><label class="sr" for="aHw">Homework</label><input class="inp grow" id="aHw" placeholder="What\'s due" autocomplete="off" enterkeyhint="done"><button class="btn pri tall" data-a="add-hw">Add</button></div>'+
-    '<div class="g2"><label class="sr" for="aHwSub">Subject</label><select class="inp" id="aHwSub" style="font-size:13px">'+subOptions(sel,'No subject')+'</select><label class="sr" for="aHwDue">Due</label><input class="inp" type="date" id="aHwDue" style="font-size:13px" value="'+esc(lastHwDue||addD(t0,1))+'"></div></div>';
+    '<div class="g2"><label class="sr" for="aHwSub">Subject</label><select class="inp" id="aHwSub">'+subOptions(sel,'No subject')+'</select><label class="sr" for="aHwDue">Due</label><input class="inp" type="date" id="aHwDue" value="'+esc(lastHwDue||addD(t0,1))+'"></div></div>';
   var groups=[
     ['Overdue',open.filter(function(x){return dd(x)!==null&&dd(x)<0}),'bad'],
     ['Today',open.filter(function(x){return dd(x)===0})],
@@ -1007,7 +1038,7 @@ function viewDeadlines(){
   var sel=lastSub&&getSub(lastSub)?lastSub:(state.subs[0]?state.subs[0].id:'');
   var h='<div class="addbar"><div class="seg" role="group" aria-label="Type">'+[['test','Test'],['project','Project']].map(function(m){return '<button data-a="dl-type" data-t="'+m[0]+'" aria-pressed="'+(addType===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>'+
     '<div class="ar"><label class="sr" for="aDl">Name</label><input class="inp grow" id="aDl" placeholder="'+(proj?'Project name':'Test name')+'" autocomplete="off" enterkeyhint="done" value="'+esc(dlDraft)+'"><button class="btn pri tall" data-a="add-dl">Add</button></div>'+
-    '<div class="g2"><label class="sr" for="aDlSub">Subject</label><select class="inp" id="aDlSub" style="font-size:13px">'+subOptions(sel,'No subject')+'</select><label class="sr" for="aDlDate">'+(proj?'Due':'Date')+'</label><input class="inp" type="date" id="aDlDate" style="font-size:13px" value="'+esc(addD(t0,proj?30:14))+'"></div></div>';
+    '<div class="g2"><label class="sr" for="aDlSub">Subject</label><select class="inp" id="aDlSub">'+subOptions(sel,'No subject')+'</select><label class="sr" for="aDlDate">'+(proj?'Due':'Date')+'</label><input class="inp" type="date" id="aDlDate" value="'+esc(addD(t0,proj?30:14))+'"></div></div>';
   if(up.length)h+='<section class="sec"><span class="lab">Tests · '+up.length+'</span>'+up.map(function(x){return testCard(x)}).join('')+'</section>';
   if(pj.length)h+='<section class="sec"><span class="lab">Projects · '+pj.length+'</span>'+pj.map(function(x){return projectCard(x)}).join('')+'</section>';
   if(!up.length&&!pj.length)h+='<div class="empty" style="min-height:0;padding:24px 0"><span class="lab" style="color:var(--ink)">No upcoming tests or projects</span></div>';
@@ -1138,12 +1169,18 @@ function viewTimer(){
 
 var VIEWS={today:['Today',viewToday],topics:['Topics',viewTopics],homework:['Homework',viewHomework],deadlines:['Deadlines',viewDeadlines],subjects:['Subjects',viewSubjects],timer:['Timer',viewTimer]};
 var ORDER=['today','topics','homework','deadlines','subjects','timer'];
+var NAVI={today:'<rect x="3.5" y="5" width="17" height="15.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><rect x="7.5" y="13.5" width="3" height="3"/>',
+  topics:'<path d="M4 4.5h6a2 2 0 0 1 2 2V20a1.5 1.5 0 0 0-1.5-1.5H4zM20 4.5h-6a2 2 0 0 0-2 2V20a1.5 1.5 0 0 1 1.5-1.5H20z"/>',
+  homework:'<rect x="3.5" y="4" width="5" height="5"/><path d="M11.5 6.5h9M11.5 16.5h9"/><rect x="3.5" y="14" width="5" height="5"/><path d="M4.8 16.5l1.3 1.3 2-2.6"/>',
+  deadlines:'<path d="M5 21V4M5 4.5h12.5l-2.5 4 2.5 4H5"/>',
+  subjects:'<rect x="3.5" y="3.5" width="7" height="7"/><rect x="13.5" y="3.5" width="7" height="7"/><rect x="3.5" y="13.5" width="7" height="7"/><rect x="13.5" y="13.5" width="7" height="7"/>',
+  timer:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/>'};
 function render(){
   if(!VIEWS[view])view='today';
   var m=$('#main'),ae=document.activeElement,keepId=ae&&ae.id&&m.contains(ae)?ae.id:null,keepVal=keepId&&ae.tagName==='INPUT'?ae.value:null;
   m.className='main'+(view==='today'?' wide':'');
   m.innerHTML='<div class="view">'+VIEWS[view][1]()+'</div>';
-  $('#nav').innerHTML=ORDER.map(function(k,i){return '<button class="nb" data-a="nav" data-v="'+k+'"'+(view===k?' aria-current="page"':'')+'>'+VIEWS[k][0]+'<kbd>'+(i+1)+'</kbd></button>'}).join('');
+  $('#nav').innerHTML=ORDER.map(function(k,i){return '<button class="nb" data-a="nav" data-v="'+k+'"'+(view===k?' aria-current="page"':'')+'><svg viewBox="0 0 24 24" aria-hidden="true">'+NAVI[k]+'</svg><span>'+VIEWS[k][0]+'</span><kbd>'+(i+1)+'</kbd></button>'}).join('');
   var skn=streak(),skon=!!activeDays()[today()],chip=$('#skc');
   chip.className='skc'+(skon?' on':'')+(pulse?' up':'');chip.setAttribute('aria-label',skn+'-day streak'+(skon?', done today':''));
   chip.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2c.6 3.4 4.5 5.6 4.5 10.5A5.5 5.5 0 0 1 6.5 13c0-2.4 1.2-4 2.4-5 .1 1.9.9 3 2.1 3.4C11 8.6 11.4 5 13 2z"/></svg>'+skn;
@@ -1202,6 +1239,7 @@ function openTask(id,preset){
     '<div class="field"><label class="lab" for="fSub">Subject</label><select class="inp" id="fSub">'+subOptions(h0?h0.sub:(lastSub&&getSub(lastSub)?lastSub:''),'No subject')+'</select></div>'+
     '<div class="g2"><div class="field"><label class="lab" for="fDue">Due</label><input class="inp" type="date" id="fDue" value="'+esc(h0?h0.due:(p.due||addD(today(),1)))+'"></div>'+
     '<div class="field"><label class="lab" for="fPlan">Planned for</label><input class="inp" type="date" id="fPlan" value="'+esc(h0?h0.plan:'')+'"></div></div>'+
+    '<div class="chips"><button class="chip" data-a="plan-set" data-n="0">Today</button><button class="chip" data-a="plan-set" data-n="1">Tomorrow</button><button class="chip" data-a="plan-set" data-n="">Same as due date</button></div>'+
     acts(!!id,'task-save'),'Homework');
   if(!id){var f=$('#fTitle');if(f)f.focus()}
 }
@@ -1263,16 +1301,22 @@ function renderSubSheet(name){
   openDlg('<h2>'+(c.id?'Edit subject':'Add subject')+'</h2>'+errLine+
     '<div class="field"><label class="lab" for="fTitle">Name</label><input class="inp" id="fTitle" autocomplete="off" value="'+esc(name)+'"></div>'+
     '<div class="field"><span class="lab">Colour</span><div class="swat">'+SUBC.map(function(k,i){return '<button data-a="sub-c" data-c="'+i+'" style="--c:var(--'+k+')" aria-label="'+k+'" aria-pressed="'+(c.c===i)+'"></button>'}).join('')+'</div></div>'+
+    (c.id&&state.subs.length>1?(function(){var i=state.subs.findIndex(function(s){return s.id===c.id});return '<div class="field"><span class="lab">Order in lists · '+(i+1)+' of '+state.subs.length+'</span><div class="g2"><button class="btn tall" data-a="sub-mv" data-n="-1"'+(i===0?' disabled':'')+'>Move up</button><button class="btn tall" data-a="sub-mv" data-n="1"'+(i===state.subs.length-1?' disabled':'')+'>Move down</button></div></div>'})():'')+
     acts(!!c.id,'sub-save'),'Subject');
   var f=$('#fTitle');if(f&&!c.id)f.focus();
+}
+function openAdd(){
+  dlgCtx={kind:'add'};
+  var items=[['topic','Topic','Something to learn, then review on a schedule'],['hw','Homework','A task with a due date'],['test','Test','An exam date, with the topics it covers'],['project','Project','A due date, broken into steps'],['grade','Result','A mark, for working out your grade'],['sub','Subject','A group for everything above']];
+  openDlg('<h2>Add</h2><div class="addg">'+items.map(function(x){return '<button class="addi" data-a="quick-add" data-k="'+x[0]+'"><b>'+x[1]+'</b><span>'+x[2]+'</span></button>'}).join('')+'</div><div class="acts"><button class="btn" data-a="close">Cancel</button></div>','Add');
 }
 function openMove(key){
   var title,cur;
   if(key.indexOf('k:')===0){var h=getTask(key.slice(2));if(!h)return;title=h.title;cur=effDate(h)}
   else{var tp=getTopic(key.slice(2));if(!tp)return;title=tp.title;cur=tp.due||''}
   dlgCtx={kind:'move',key:key};
-  openDlg('<h2>'+esc(title)+'</h2><div class="chips"><button class="chip" data-a="mv" data-n="0">Today</button><button class="chip" data-a="mv" data-n="1">Tomorrow</button><button class="chip" data-a="mv" data-n="2">In 2 days</button><button class="chip" data-a="mv-mon">Next Monday</button></div>'+
-    '<div class="field"><label class="lab" for="mvDate">Date</label><input class="inp" type="date" id="mvDate" value="'+esc(cur)+'"></div>'+
+  openDlg('<span class="lab">'+(key.indexOf('k:')===0?'Plan it for':'Move to')+'</span><h2 style="margin-top:-12px">'+esc(title)+'</h2><div class="mvg"><button class="btn tall" data-a="mv" data-n="0">Today</button><button class="btn tall" data-a="mv" data-n="1">Tomorrow</button><button class="btn tall" data-a="mv" data-n="2">In 2 days</button><button class="btn tall" data-a="mv-mon">Next Monday</button></div>'+
+    '<div class="field"><label class="lab" for="mvDate">Or pick a date</label><input class="inp" type="date" id="mvDate" value="'+esc(cur)+'"></div>'+
     '<div class="acts"><button class="btn pri" data-a="mv-save">Save</button><button class="btn" data-a="close">Cancel</button></div>','Move');
 }
 function openRate(id){
@@ -1351,6 +1395,23 @@ var A={
   nav:function(el){go(el.dataset.v)},
   close:function(){closeDlg()},
   settings:function(){openSettings()},
+  'add-menu':function(){openAdd()},
+  'quick-add':function(el){
+    var k=el.dataset.k,sub=lastSub&&getSub(lastSub)?lastSub:'';
+    if(k==='topic'){closeDlg();go('topics');var i=$('#aTopic');if(i)i.focus()}
+    else if(k==='hw')openTask(null,{due:addD(today(),1)});
+    else if(k==='test'||k==='project')openTest(null,{type:k,sub:sub});
+    else if(k==='grade')A['new-grade']();
+    else openSubject(null);
+  },
+  'plan-set':function(el){var f=$('#fPlan');if(!f)return;f.value=el.dataset.n===''?val('fDue'):addD(today(),+el.dataset.n)},
+  'sub-mv':function(el){
+    var c=dlgCtx;if(!c||c.kind!=='sub'||!c.id)return;
+    var i=state.subs.findIndex(function(s){return s.id===c.id}),j=i+(+el.dataset.n);
+    if(i<0||j<0||j>=state.subs.length)return;
+    var n=val('fTitle'),t=state.subs[i];state.subs[i]=state.subs[j];state.subs[j]=t;
+    commit();renderSubSheet(n);
+  },
   sync:function(){openSync()},
   undo:function(){if(!undoSnap)return;var s=undoSnap;undoSnap=null;$('#toast').hidden=true;state=normalize(JSON.parse(s));applyTheme();commit()},
   rate:function(el){rateTopic(el.dataset.id,+el.dataset.f,false,el)},
