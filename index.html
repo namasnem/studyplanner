@@ -1413,7 +1413,7 @@ var A={
     var tone=val('sTone')||'normal',m=$('#nMsg');
     askNotify().then(function(p){
       if(p!=='granted'){if(m)m.textContent=notePerm();return}
-      var c=noteCtx();if(!c.n){c.n=3;c.first='Quadratic equations'}
+      var c=noteCtx();if(!c.n){c.n=3;c.first='Quadratic equations';c.done=0}
       showNote(noteText(tone,c.test?'test':'daily',c),'test',true);
       if(m)m.textContent='Test sent. '+notePerm();
     });
@@ -1685,51 +1685,52 @@ document.addEventListener('keydown',function(e){
 // ---------- reminders ----------
 var NKEY='study-planner.notified',swReg=null;
 var pick=function(a){return a[Math.floor(Math.random()*a.length)]};
+var nItems=function(n){return n===1?'one item':n+' items'};
 var MSG={
   normal:{
-    daily:[function(c){return c.n+(c.n===1?' thing':' things')+' to do today, starting with '+c.first+'.'}],
-    test:[function(c){return c.test+' is tomorrow. '+c.n+' left to do today, starting with '+c.first+'.'}],
-    streak:[function(c){return 'Your '+c.s+'-day streak ends at midnight. One item keeps it going.'}],
-    focus:[function(c){return 'Focus session over. Take a break or mark '+c.title+' as finished.'}],
-    brk:[function(){return 'Break over. Ready for the next session?'}]
+    daily:[function(c){return c.n===1?'You have one thing left to do today: '+c.first+'.':'You have '+c.n+' things to do today, so start with '+c.first+' and work down the list.'}],
+    test:[function(c){return c.test+' is tomorrow, and you still have '+nItems(c.n)+' left today, starting with '+c.first+'.'}],
+    streak:[function(c){return 'Your '+c.s+'-day streak ends at midnight unless you finish one item before then.'}],
+    focus:[function(c){return 'Your focus session on '+c.title+' is over, so take a break or mark it as finished.'}],
+    brk:[function(){return 'Your break is over, so start the next session when you are ready.'}]
   },
   persuasive:{
     daily:[
-      function(c){return c.first+' takes ten minutes now, or an hour of cramming later.'},
-      function(c){return c.n+' items today. Start with '+c.first+'; the rest is easier once you have begun.'},
-      function(c){return 'Spaced reviews only work if you turn up on the day. '+c.first+' is due.'},
-      function(c){return 'Tomorrow you will be glad you did '+c.first+' today. Five minutes is enough to start.'}
+      function(c){return 'Ten minutes on '+c.first+' now will save you an hour of cramming later, so get it done while it is still small.'},
+      function(c){return c.n===1?'You have one item today, and once you start '+c.first+' you are nearly done.':'You have '+c.n+' items today, and once you start with '+c.first+' the rest will feel much easier.'},
+      function(c){return 'Spaced reviews only work when you do them on the day they are due, and '+c.first+' is due today.'},
+      function(c){return 'Tomorrow you will be glad you did '+c.first+' today, and five minutes is enough to get going.'}
     ],
     test:[
-      function(c){return c.test+' is tomorrow. Every item you finish tonight is a mark you keep. Start with '+c.first+'.'},
-      function(c){return 'One evening left before '+c.test+'. Spend twenty minutes on '+c.first+' and walk in calmer.'}
+      function(c){return c.test+' is tomorrow, and every item you finish tonight is a mark you keep, so start with '+c.first+'.'},
+      function(c){return 'You have one evening left before '+c.test+', and twenty minutes on '+c.first+' will help you walk in calmer.'}
     ],
     streak:[
-      function(c){return c.s+' days of work rides on one item tonight. Do not hand it back.'},
-      function(c){return 'Miss today and the counter goes back to zero. One review saves '+c.s+' days.'}
+      function(c){return 'You have built a '+c.s+'-day streak, and one item tonight is all it takes to keep it.'},
+      function(c){return 'If you miss today your streak goes back to zero, but a single review will save all '+c.s+' days.'}
     ],
-    focus:[function(c){return 'Session done. Mark '+c.title+' as finished while it still counts.'}],
-    brk:[function(){return 'Break over. Starting again now is easier than starting again in an hour.'}]
+    focus:[function(c){return 'Your session on '+c.title+' is done, so mark it as finished while the work still counts.'}],
+    brk:[function(){return 'Your break is over, and starting again now is far easier than starting again in an hour.'}]
   },
   mean:{
     daily:[
-      function(c){return c.n+' things due and you have done none of them. Impressive, in the worst way.'},
+      function(c){return c.done?'You still have '+nItems(c.n)+' due today, so apparently you thought finishing '+c.done+' was enough.':c.n===1?'You have one item due today and have not even touched it, which is impressive in the worst way.':'You have '+c.n+' items due today and have not touched a single one, which is impressive in the worst way.'},
       function(c){return c.first+' is not going to learn itself, and on current evidence neither are you.'},
-      function(c){return 'Still scrolling? '+c.first+' has been waiting all day, like your grades.'},
-      function(){return 'You set this reminder because you knew you would slack off. You were right.'},
-      function(c){return c.n+' items left. Your work ethic called; it wants to know if you are still alive.'}
+      function(c){return 'You are still scrolling while '+c.first+' has been waiting all day, much like your grades.'},
+      function(){return 'You set this reminder because you knew you would slack off, and you were right.'},
+      function(c){return 'You have '+nItems(c.n)+' left, and your work ethic has called to ask whether you are still alive.'}
     ],
     test:[
-      function(c){return c.test+' is tomorrow and you are reading a notification instead of '+c.first+'. Bold strategy.'},
-      function(c){return 'Future you is about to sit '+c.test+' unprepared, and it will be entirely your fault. Open '+c.first+'.'}
+      function(c){return c.test+' is tomorrow and you are reading a notification instead of revising '+c.first+', which is a bold strategy.'},
+      function(c){return 'Future you is about to sit '+c.test+' unprepared, and it will be entirely your fault unless you open '+c.first+' now.'}
     ],
     streak:[
-      function(c){return c.s+' days of effort, about to be binned by someone who could not manage one review.'},
-      function(c){return 'Your '+c.s+'-day streak dies at midnight. Laziness is a choice and you keep choosing it.'},
-      function(){return 'One item. That is all. Even you can manage one item. Probably.'}
+      function(c){return 'You have put in '+c.s+' days of effort, and you are about to bin all of it because you could not manage one review.'},
+      function(c){return 'Your '+c.s+'-day streak dies at midnight, because laziness is a choice and you keep choosing it.'},
+      function(){return 'All it takes tonight is one item, and even you can probably manage that.'}
     ],
-    focus:[function(c){return 'Time is up. Did you work on '+c.title+', or just stare at it?'}],
-    brk:[function(){return 'Break over, sloth. Back to it.'}]
+    focus:[function(c){return 'Time is up, and the real question is whether you worked on '+c.title+' or just stared at it.'}],
+    brk:[function(){return 'Your break is over, sloth, so get back to it.'}]
   }
 };
 function canNotify(){return 'Notification' in window&&Notification.permission==='granted'}
@@ -1747,7 +1748,7 @@ function showNote(body,tag,force){
 function noteCtx(){
   var t0=today(),items=dueReviews(t0).concat(dueStarts(t0),dueTasks(t0));
   var tm=state.tests.filter(function(x){return x.kind!=='project'&&diff(t0,x.date)===1})[0];
-  return {n:items.length,first:items[0]?items[0].title:'',s:streak(),test:tm?tm.title:''};
+  return {n:items.length,first:items[0]?items[0].title:'',s:streak(),test:tm?tm.title:'',done:state.stats.days[t0]||0};
 }
 function noteText(tone,kind,c){var set=MSG[tone]||MSG.normal;return pick(set[kind]||MSG.normal[kind])(c)}
 function notifyTimer(t){
