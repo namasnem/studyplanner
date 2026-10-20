@@ -431,7 +431,7 @@ var DOW=['S','M','T','W','T','F','S'];
 var FAMS=['Forgot','Shaky','Okay','Good','Easy'],FAMC=['red','orange','amber','blue','grn'];
 var SUBC=['orange','grn','blue','pink','purple','teal','amber','red'];
 var BOUNDS='7:85,6:75,5:65,4:55,3:45,2:35,1:0';
-function defaults(){return {spacing:1,maxInterval:180,testAware:true,focusMins:25,breakMins:5,autoBreak:false,sound:true,theme:'dark',gradeF:20,gradeS:80,bounds:BOUNDS}}
+function defaults(){return {spacing:1,maxInterval:180,testAware:true,focusMins:25,breakMins:5,autoBreak:false,sound:true,notify:false,notifyTone:'normal',notifyAt:'17:00',theme:'dark',gradeF:20,gradeS:80,bounds:BOUNDS}}
 
 // Each topic keeps a "base" gap, the natural spacing before spacing/test adjustments.
 // Test caps shorten the scheduled gap only, so they never erode long-term progress.
@@ -1093,6 +1093,7 @@ function onTimerEnd(){
   if(!timer)return;
   timer.running=false;timer.acc=timer.total;timer.ended=true;
   logTimer();saveTimer();lockScreen(false);beep();
+  if(document.hidden)notifyTimer(timer);
   if(timer.mode==='focus'&&state.settings.autoBreak){startTimer({title:'Break',mode:'break',mins:state.settings.breakMins||5});toast('Break started');return}
   render();
 }
@@ -1326,6 +1327,12 @@ function openRate(id){
   dlgCtx={kind:'rate',id:id,start:start};
   openDlg(subTag(tp.sub)+'<h2 style="margin-top:-12px">'+esc(tp.title)+'</h2><span class="lab" style="color:var(--ink)">Rate your knowledge</span><div class="famg">'+FAMS.map(function(n,i){return '<button data-a="rate-sheet" data-f="'+(i+1)+'" style="--c:var(--inv)">'+n+'<span>+'+previewGap(tp,i+1,start)+'d</span></button>'}).join('')+'</div><div class="acts"><button class="btn" data-a="close">Cancel</button></div>','Familiarity');
 }
+function notePerm(){
+  var base='Reminders: your daily list at the time above, a streak warning in the evening, and the timer ending while you are in another tab. They only arrive while the planner is open in a tab or installed as an app.';
+  if(!('Notification' in window))return 'This browser does not support notifications. On iPhone, add the planner to your Home Screen first.';
+  if(Notification.permission==='denied')return 'Notifications are blocked for this site. Allow them in your browser settings. '+base;
+  return base;
+}
 function openSettings(){
   var S=state.settings,sp=[0.7,0.85,1,1.15,1.3],names=['Much closer together','Closer together','Standard','Further apart','Much further apart'];
   var near=sp.reduce(function(a,b){return Math.abs(b-S.spacing)<Math.abs(a-S.spacing)?b:a});
@@ -1339,6 +1346,11 @@ function openSettings(){
     '<div class="field"><label class="lab" for="sBounds" style="color:var(--ink2)">Grade boundaries</label><input class="inp" id="sBounds" autocomplete="off" value="'+esc(S.bounds)+'"></div><p class="note">Grade:lowest percentage, highest first. Example: 7:85, 6:75, 5:65</p></div>'+
     '<div class="field"><span class="lab">Timer</span><div class="g2"><div class="field"><label class="lab" for="sFocus" style="color:var(--ink2)">Focus (min)</label><input class="inp" id="sFocus" type="number" inputmode="numeric" min="1" max="300" value="'+S.focusMins+'"></div>'+
     '<div class="field"><label class="lab" for="sBreak" style="color:var(--ink2)">Break (min)</label><input class="inp" id="sBreak" type="number" inputmode="numeric" min="1" max="60" value="'+S.breakMins+'"></div></div>'+chk('sAuto',S.autoBreak,'Start a break when focus ends')+chk('sSound',S.sound,'Beep when time\'s up')+'</div>'+
+    '<div class="field"><span class="lab">Reminders</span>'+chk('sNotify',S.notify,'Send reminder notifications')+
+    '<div class="g2"><div class="field"><label class="lab" for="sTone" style="color:var(--ink2)">Tone</label><select class="inp" id="sTone">'+[['normal','Normal'],['persuasive','Persuasive'],['mean','Mean']].map(function(o){return '<option value="'+o[0]+'"'+(S.notifyTone===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'+
+    '<div class="field"><label class="lab" for="sAt" style="color:var(--ink2)">Daily reminder</label><input class="inp" id="sAt" type="time" value="'+esc(S.notifyAt)+'"></div></div>'+
+    '<button class="btn tall" data-a="n-test">Send a test notification</button>'+
+    '<p class="note" id="nMsg">'+notePerm()+'</p></div>'+
     '<div class="field"><span class="lab">Anki</span>'+chk('sAnki',state.anki.on,'Show Anki on Today')+'<span class="stl" id="aStat">'+ankiStatHTML()+'</span><div class="g2"><button class="btn tall" data-a="anki-connect">'+(ankiOn?'Refresh':'Connect Anki')+'</button>'+(ankiOn?'<button class="btn tall danger" data-a="anki-off">Disconnect</button>':'<span></span>')+'</div><p class="note">Requires Anki open on this computer with the AnkiConnect add-on (code 2055492159)</p></div>'+
     '<div class="field"><label class="lab" for="sTheme">Theme</label><select class="inp" id="sTheme"><option value="dark"'+(S.theme==='dark'?' selected':'')+'>Dark</option><option value="light"'+(S.theme==='light'?' selected':'')+'>Light</option><option value="auto"'+(S.theme==='auto'?' selected':'')+'>Match device</option></select></div>'+
     '<div class="acts"><button class="btn pri" data-a="set-save">Save</button><button class="btn" data-a="close">Cancel</button></div>'+
@@ -1397,6 +1409,15 @@ var A={
   close:function(){closeDlg()},
   settings:function(){openSettings()},
   'add-menu':function(){openAdd()},
+  'n-test':function(){
+    var tone=val('sTone')||'normal',m=$('#nMsg');
+    askNotify().then(function(p){
+      if(p!=='granted'){if(m)m.textContent=notePerm();return}
+      var c=noteCtx();if(!c.n){c.n=3;c.first='Quadratic equations';c.done=0}
+      showNote(noteText(tone,c.test?'test':'daily',c),'test',true);
+      if(m)m.textContent='Test sent. '+notePerm();
+    });
+  },
   'quick-add':function(el){
     var k=el.dataset.k,sub=lastSub&&getSub(lastSub)?lastSub:'';
     if(k==='topic'){closeDlg();go('topics');var i=$('#aTopic');if(i)i.focus()}
@@ -1560,6 +1581,8 @@ var A={
     S.spacing=+val('sSp')||1;S.maxInterval=n('sMax',180,14,730);S.testAware=$('#sTest').checked;
     S.focusMins=n('sFocus',25,1,300);S.breakMins=n('sBreak',5,1,60);S.autoBreak=$('#sAuto').checked;S.sound=$('#sSound').checked;
     S.gradeF=Math.max(0,Math.min(100,+val('sGf')||0));S.gradeS=Math.max(0,Math.min(100,+val('sGs')||0));S.bounds=parseBounds(val('sBounds')).map(function(b){return b.g+':'+b.min}).join(',');
+    S.notify=$('#sNotify').checked;S.notifyTone=val('sTone')||'normal';S.notifyAt=val('sAt')||'17:00';
+    if(S.notify&&'Notification' in window&&Notification.permission==='default')askNotify().then(function(p){if(p!=='granted')toast('Notifications not allowed, so reminders are off on this device')});
     S.theme=val('sTheme')||'dark';state.settings=S;state.anki.on=$('#sAnki').checked;tDraft=null;applyTheme();closeDlg();commit();toast('Settings saved');
   },
   reset:function(el){
@@ -1659,12 +1682,101 @@ document.addEventListener('keydown',function(e){
   }
   if(k===' '&&timer&&tag!=='BUTTON'){e.preventDefault();pauseToggle()}
 });
+// ---------- reminders ----------
+var NKEY='study-planner.notified',swReg=null;
+var pick=function(a){return a[Math.floor(Math.random()*a.length)]};
+var nItems=function(n){return n===1?'one item':n+' items'};
+var MSG={
+  normal:{
+    daily:[function(c){return c.n===1?'You have one thing left to do today: '+c.first+'.':'You have '+c.n+' things to do today, so start with '+c.first+' and work down the list.'}],
+    test:[function(c){return c.test+' is tomorrow, and you still have '+nItems(c.n)+' left today, starting with '+c.first+'.'}],
+    streak:[function(c){return 'Your '+c.s+'-day streak ends at midnight unless you finish one item before then.'}],
+    focus:[function(c){return 'Your focus session on '+c.title+' is over, so take a break or mark it as finished.'}],
+    brk:[function(){return 'Your break is over, so start the next session when you are ready.'}]
+  },
+  persuasive:{
+    daily:[
+      function(c){return 'Ten minutes on '+c.first+' now will save you an hour of cramming later, so get it done while it is still small.'},
+      function(c){return c.n===1?'You have one item today, and once you start '+c.first+' you are nearly done.':'You have '+c.n+' items today, and once you start with '+c.first+' the rest will feel much easier.'},
+      function(c){return 'Spaced reviews only work when you do them on the day they are due, and '+c.first+' is due today.'},
+      function(c){return 'Tomorrow you will be glad you did '+c.first+' today, and five minutes is enough to get going.'}
+    ],
+    test:[
+      function(c){return c.test+' is tomorrow, and every item you finish tonight is a mark you keep, so start with '+c.first+'.'},
+      function(c){return 'You have one evening left before '+c.test+', and twenty minutes on '+c.first+' will help you walk in calmer.'}
+    ],
+    streak:[
+      function(c){return 'You have built a '+c.s+'-day streak, and one item tonight is all it takes to keep it.'},
+      function(c){return 'If you miss today your streak goes back to zero, but a single review will save all '+c.s+' days.'}
+    ],
+    focus:[function(c){return 'Your session on '+c.title+' is done, so mark it as finished while the work still counts.'}],
+    brk:[function(){return 'Your break is over, and starting again now is far easier than starting again in an hour.'}]
+  },
+  mean:{
+    daily:[
+      function(c){return c.done?'You still have '+nItems(c.n)+' due today, so apparently you thought finishing '+c.done+' was enough.':c.n===1?'You have one item due today and have not even touched it, which is impressive in the worst way.':'You have '+c.n+' items due today and have not touched a single one, which is impressive in the worst way.'},
+      function(c){return c.first+' is not going to learn itself, and on current evidence neither are you.'},
+      function(c){return 'You are still scrolling while '+c.first+' has been waiting all day, much like your grades.'},
+      function(){return 'You set this reminder because you knew you would slack off, and you were right.'},
+      function(c){return 'You have '+nItems(c.n)+' left, and your work ethic has called to ask whether you are still alive.'}
+    ],
+    test:[
+      function(c){return c.test+' is tomorrow and you are reading a notification instead of revising '+c.first+', which is a bold strategy.'},
+      function(c){return 'Future you is about to sit '+c.test+' unprepared, and it will be entirely your fault unless you open '+c.first+' now.'}
+    ],
+    streak:[
+      function(c){return 'You have put in '+c.s+' days of effort, and you are about to bin all of it because you could not manage one review.'},
+      function(c){return 'Your '+c.s+'-day streak dies at midnight, because laziness is a choice and you keep choosing it.'},
+      function(){return 'All it takes tonight is one item, and even you can probably manage that.'}
+    ],
+    focus:[function(c){return 'Time is up, and the real question is whether you worked on '+c.title+' or just stared at it.'}],
+    brk:[function(){return 'Your break is over, sloth, so get back to it.'}]
+  }
+};
+function canNotify(){return 'Notification' in window&&Notification.permission==='granted'}
+function askNotify(){
+  if(!('Notification' in window))return Promise.resolve('unsupported');
+  if(Notification.permission!=='default')return Promise.resolve(Notification.permission);
+  return Notification.requestPermission();
+}
+function showNote(body,tag,force){
+  if((!force&&!state.settings.notify)||!canNotify())return;
+  var o={body:body,tag:tag,renotify:true};
+  if(swReg){swReg.showNotification('Study planner',o).catch(function(){});return}
+  try{var n=new Notification('Study planner',o);n.onclick=function(){window.focus();n.close()}}catch(e){}
+}
+function noteCtx(){
+  var t0=today(),items=dueReviews(t0).concat(dueStarts(t0),dueTasks(t0));
+  var tm=state.tests.filter(function(x){return x.kind!=='project'&&diff(t0,x.date)===1})[0];
+  return {n:items.length,first:items[0]?items[0].title:'',s:streak(),test:tm?tm.title:'',done:state.stats.days[t0]||0};
+}
+function noteText(tone,kind,c){var set=MSG[tone]||MSG.normal;return pick(set[kind]||MSG.normal[kind])(c)}
+function notifyTimer(t){
+  var kind=t.mode==='break'?'brk':'focus';
+  showNote(noteText(state.settings.notifyTone,kind,{title:t.title}),'timer');
+}
+var hmMins=function(hm){var p=String(hm||'').split(':');return (+p[0]||0)*60+(+p[1]||0)};
+function checkNotify(){
+  var S=state.settings;if(!S.notify||!canNotify())return;
+  var now=new Date(),t0=today(),m=now.getHours()*60+now.getMinutes(),sent;
+  try{sent=JSON.parse(localStorage.getItem(NKEY)||'{}')}catch(e){sent={}}
+  if(sent.d!==t0)sent={d:t0};
+  var looking=!document.hidden&&document.hasFocus(),c=noteCtx(),at=hmMins(S.notifyAt),late=Math.max(at+180,21*60);
+  // Each reminder fires once a day, within three hours of its time, and only when the app is not in front of you.
+  if(!sent.daily&&m>=at&&m<at+180){sent.daily=1;if(c.n&&!looking)showNote(noteText(S.notifyTone,c.test?'test':'daily',c),'daily')}
+  if(!sent.streak&&m>=late&&m<late+180){sent.streak=1;if(c.s&&!activeDays()[t0]&&!looking)showNote(noteText(S.notifyTone,'streak',c),'streak')}
+  try{localStorage.setItem(NKEY,JSON.stringify(sent))}catch(e){}
+}
+var swWait='serviceWorker' in navigator&&/^https?:$/.test(location.protocol)?navigator.serviceWorker.register('sw.js').then(function(r){swReg=r},function(){}):Promise.resolve();
+setInterval(checkNotify,60000);
+
 var lastPull=0;
 document.addEventListener('visibilitychange',function(){
   if(document.hidden)return;
   if(timer&&timer.running){lockScreen(true);if(tLeft()===0)onTimerEnd()}
   if(gOn()&&Date.now()-lastPull>15000){lastPull=Date.now();gPull()}
   if(ankiOn)ankiRefresh();
+  checkNotify();
   render();
 });
 setInterval(function(){if(!document.hidden&&gOn()&&!gBusy){lastPull=Date.now();gPull()}},120000);
@@ -1678,6 +1790,7 @@ setDot(gOn()?'busy':'off',gOn()?'Syncing':'Not connected');
 if(gOn()){lastPull=Date.now();gPull()}
 initCloud();
 if(timer&&timer.running){lockScreen(true);if(tLeft()===0)onTimerEnd()}
+swWait.then(checkNotify);
 })();
 </script>
 
